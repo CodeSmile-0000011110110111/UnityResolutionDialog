@@ -22,13 +22,14 @@ Changes to the following items may cause other items to change or become irrelev
 - Resolution affects:
 	Refresh rate
 - Refresh rate affects:
-	calculated max fps
+	calculated max fps (vsync count)
 - Fullscreenmode affects:
 	resolution
 	refresh rate (disable)
+	vsync count (disable)
 - Vsync count affects:
 	refresh rate (disable)
-	calculated max fps
+	calculated max fps (vsync count)
 - quality affects:
 	reset vsync count to dialog's value as it may be changed by quality level
 - display affects:
