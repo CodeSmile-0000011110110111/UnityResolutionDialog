@@ -15,10 +15,30 @@ Flow:
 	update disabled status
 	update Hz dropdown (when one of the following changed: resolution, vsync, fullscreen mode)
 
+Side-effects:
+
+Changes to the following items may cause other items to change or become irrelevant.
+
+- Resolution affects:
+	Refresh rate
+- Refresh rate affects:
+	calculated max fps
+- Fullscreenmode affects:
+	resolution
+	refresh rate (disable)
+- Vsync count affects:
+	refresh rate (disable)
+	calculated max fps
+- quality affects:
+	reset vsync count to dialog's value as it may be changed by quality level
+- display affects:
+	resolution
+	refresh rate
+	fullscreen mode (?)
 
 TODO
 
 Tasks:
-
+- update vsync with fps hint (ie "1/2 Display Rate(30 fps)")
 
 Bugs:
