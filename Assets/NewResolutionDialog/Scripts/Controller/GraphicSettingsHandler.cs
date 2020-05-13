@@ -24,11 +24,32 @@ public class GraphicSettingsHandler : MonoBehaviour
 
     static readonly string hzSuffix = " Hz";
 
+
+    #region Dialog Getters
+    string GetSelectedResolution()
+    {
+        return resolution.options[resolution.value].text;
+    }
+    string GetResolutionString()
+    {
+        return GetResolutionString(Screen.currentResolution.width, Screen.currentResolution.height);
+    }
+    string GetResolutionString(int w, int h)
+    {
+        return string.Format("{0}x{1}", w, h);
+    }
+
+    string GetSelectedRefreshRate()
+    {
+        return refreshRate.options[refreshRate.value].text;
+    }
+
     bool IsActivationKeyHeldDown()
     {
         // Note: keys are only available within Update() and there only from the 2nd or 3rd frame onward
         return Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.AltGr) || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
     }
+    #endregion
 
     #region Unity Startup
     void Awake()
@@ -88,7 +109,7 @@ public class GraphicSettingsHandler : MonoBehaviour
             var height = resParts[1].Trim();
             var hz = resParts[2].Trim();
 
-            var resString = width + "x" + height;
+            var resString = GetResolutionString(int.Parse(width), int.Parse(height));
 
             // resolution
             if (refreshRates.ContainsKey(resString) == false)
@@ -156,7 +177,7 @@ public class GraphicSettingsHandler : MonoBehaviour
         {
             var display = Display.displays[i];
 
-            var displayString = "Diplay " + (i + 1) + " (" + display.renderingWidth + "x" + display.renderingHeight + ")";
+            var displayString = "Diplay " + (i + 1) + " (" + GetResolutionString(display.renderingWidth, display.renderingHeight) + ")";
             var option = new Dropdown.OptionData(displayString);
             options.Add(option);
 
@@ -166,18 +187,6 @@ public class GraphicSettingsHandler : MonoBehaviour
         }
 
         display.AddOptions(options);
-    }
-    #endregion
-
-    #region Dialog Getters
-    string GetSelectedResolution()
-    {
-        return resolution.options[resolution.value].text;
-    }
-
-    string GetSelectedRefreshRate()
-    {
-        return refreshRate.options[refreshRate.value].text;
     }
     #endregion
 
@@ -220,11 +229,13 @@ public class GraphicSettingsHandler : MonoBehaviour
 
     void SelectCurrentResolution()
     {
-        var res = Screen.currentResolution.width + "x" + Screen.currentResolution.height;
+        // select lowest by default
+        resolution.value = 0;
+
+        var res = GetResolutionString();
         for (int i = 0; i < resolution.options.Count; i++)
         {
-            var option = resolution.options[i];
-            if (option.text == res)
+            if (resolution.options[i].text == res)
             {
                 resolution.value = i;
                 break;
@@ -234,13 +245,15 @@ public class GraphicSettingsHandler : MonoBehaviour
 
     void SelectCurrentRefreshRate()
     {
+        // select highest by default
+        refreshRate.value = refreshRate.options.Count - 1;
+
         string hz = Screen.currentResolution.refreshRate + hzSuffix;
         for (int i = 0; i < refreshRate.options.Count; i++)
         {
-            var refreshRate = this.refreshRate.options[i];
-            if (refreshRate.text == hz)
+            if (refreshRate.options[i].text == hz)
             {
-                this.refreshRate.value = i;
+                refreshRate.value = i;
                 break;
             }
         }
@@ -254,7 +267,7 @@ public class GraphicSettingsHandler : MonoBehaviour
         {
             // in editor mode we can only change quality level, everything else is not applicable or has to be changed through game view settings
             resolution.interactable = false;
-            refreshRate.interactable = false;
+            SetRefreshRateInteractable(false);
             fullScreenMode.interactable = false;
             vSync.interactable = false;
             resolution.interactable = false;
@@ -263,7 +276,15 @@ public class GraphicSettingsHandler : MonoBehaviour
         }
         else
         {
-            // TODO
+            var res = GetResolutionString();
+            
+            resolution.interactable = true;
+            SetRefreshRateInteractable(refreshRates[res].Count > 1 && Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen);
+            fullScreenMode.interactable = true;
+            vSync.interactable = false;
+            resolution.interactable = false;
+            quality.interactable = true;
+            display.interactable = false;
         }
     }
 
@@ -379,7 +400,7 @@ public class GraphicSettingsHandler : MonoBehaviour
     void SetResolution(int width, int height, FullScreenMode mode, int hz)
     {
         // prevent setting resolution multiple times when dialog is updated in the next frame
-        Debug.LogError("Changing resolution to: " + width + "x" + height + " @ " + hz + " Hz in " + mode);
+        Debug.LogError("Changing resolution to: " + GetResolutionString(width, height) + " @ " + hz + " Hz in " + mode);
         Screen.SetResolution(width, height, mode, hz);
     }
     #endregion
