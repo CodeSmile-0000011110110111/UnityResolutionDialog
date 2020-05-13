@@ -10,7 +10,6 @@ using UnityEngine.UI;
 
 public class GraphicSettingsHandler : MonoBehaviour
 {
-    [SerializeField] Settings settings;
     [SerializeField] Dropdown resolution;
     [SerializeField] Dropdown refreshRate;
     [SerializeField] Dropdown fullScreenMode;
@@ -21,52 +20,32 @@ public class GraphicSettingsHandler : MonoBehaviour
     [SerializeField] Text displayNote;
 
     Dictionary<string, List<string>> refreshRates = new Dictionary<string, List<string>>();
-    FullScreenMode launchFullScreenMode = FullScreenMode.Windowed;
     bool updatingDialog = true;
+
+    static readonly string hzSuffix = " Hz";
 
     bool IsActivationKeyHeldDown()
     {
-        // this doesn't work since keys are only available in Update(), and then only from the 3rd frame onward
+        // Note: keys are only available within Update() and there only from the 2nd or 3rd frame onward
         return Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.AltGr) || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
     }
 
+    #region Unity Startup
     void Awake()
     {
         displayNote.gameObject.SetActive(false);
         vSyncNote.gameObject.SetActive(false);
-
-        //if (settings.HiddenByDefault == false || IsActivationKeyHeldDown())
-        {
-            // ensure dialog always launches in window mode
-            launchFullScreenMode = Screen.fullScreenMode;
-            Screen.fullScreenMode = FullScreenMode.Windowed;
-        }
-        /*
-        else
-        {
-            // load next scene immediately
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-            this.enabled = false;
-        }
-        */
-    }
-
-    void Start()
-    {
-        updatingDialog = true;
-        UpdateSettings();
-        updatingDialog = false;
     }
 
     void OnEnable()
     {
+        PopulateDropdowns();
+        ApplyCurrentSettingsToDialog();
+        UpdateDialogInteractability();
     }
+    #endregion
 
-    void OnDisable()
-    {
-    }
-
-
+    #region Update
     int frameCount = 0;
     bool firstKeyPressed = false;
     private void Update()
@@ -81,36 +60,16 @@ public class GraphicSettingsHandler : MonoBehaviour
             }
         }
     }
+    #endregion
 
-    void UpdateDialogAfterEndOfFrame()
-    {
-        if (updatingDialog == false)
-        {
-            updatingDialog = true; // ensure only one coroutine updates
-            StartCoroutine(UpdateSettingsAfterEndOfFrame());
-        }
-    }
-
-    IEnumerator UpdateSettingsAfterEndOfFrame()
-    {
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForEndOfFrame();
-        UpdateSettings();
-        yield return new WaitForEndOfFrame();
-        updatingDialog = false;
-    }
-
-    void UpdateSettings()
+    #region PopulateDropdowns
+    void PopulateDropdowns()
     {
         // TODO: split into populating and selecting an item, with or without applying the change
         PopulateResolutionsDropdown();
         PopulateRefresRateDropdown();
-        InitFullScreenMode();
-        InitVSync();
         PopulateQualityDropdown();
         PopulateMonitorDropdown();
-        ApplyResolution();
-        SetRefreshRateEnabled(Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen);
     }
 
     void PopulateResolutionsDropdown()
@@ -125,9 +84,9 @@ public class GraphicSettingsHandler : MonoBehaviour
         foreach (var res in resolutions)
         {
             var resParts = res.ToString().Split(new char[] { 'x', '@', 'H' });
-            var width = resParts[0];
-            var height = resParts[1];
-            var hz = resParts[2];
+            var width = resParts[0].Trim();
+            var height = resParts[1].Trim();
+            var hz = resParts[2].Trim();
 
             var resString = width + "x" + height;
 
@@ -148,10 +107,7 @@ public class GraphicSettingsHandler : MonoBehaviour
         }
 
         resolution.AddOptions(options);
-        resolution.value = resolution.options.IndexOf(currentOption); // select current resolution
-        resolution.interactable = !Application.isEditor;
     }
-
     void PopulateRefresRateDropdown()
     {
         refreshRate.ClearOptions();
@@ -162,89 +118,11 @@ public class GraphicSettingsHandler : MonoBehaviour
 
         foreach (var hz in refreshRatesForCurrentRes)
         {
-            var option = new Dropdown.OptionData(hz + " Hz");
+            var option = new Dropdown.OptionData(hz + hzSuffix);
             options.Add(option);
         }
 
         refreshRate.AddOptions(options);
-        refreshRate.value = refreshRate.options.Count - 1; // select highest refresh rate
-        refreshRate.interactable = refreshRatesForCurrentRes.Count > 1 && Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen;
-    }
-
-    void SelectRefreshRate(string hz)
-    {
-        for (int i = 0; i < this.refreshRate.options.Count; i++)
-        {
-            var refreshRate = this.refreshRate.options[i];
-            if (refreshRate.text == hz)
-            {
-                this.refreshRate.value = i;
-                break;
-            }
-        }
-    }
-
-    void SetRefreshRateEnabled(bool enabled)
-    {
-        if (!enabled)
-        {
-            refreshRate.ClearOptions();
-            refreshRate.AddOptions(new List<string>() { "N/A" });
-        }
-
-        refreshRate.interactable = enabled;
-    }
-
-    string GetSelectedResolution()
-    {
-        return resolution.options[resolution.value].text;
-    }
-
-    string GetSelectedRefreshRate()
-    {
-        return refreshRate.options[refreshRate.value].text;
-    }
-
-    public void OnResolutionChanged()
-    {
-        //var selectedHz = GetSelectedRefreshRate();
-
-        ApplyResolution();
-
-        /*
-        // update refresh rates and try to select the same refresh rate as before, if available
-        PopulateRefresRateDropdown();
-        SelectRefreshRate(selectedHz);
-        selectedHz = GetSelectedRefreshRate(); // Hz may have changed if previous Hz isn't available
-        */
-
-        UpdateDialogAfterEndOfFrame();
-    }
-
-    public void OnRefreshRateChanged()
-    {
-        ApplyResolution();
-        UpdateDialogAfterEndOfFrame();
-    }
-
-    void ApplyResolution()
-    {
-        var selectedHz = GetSelectedRefreshRate();
-        var selectedRes = GetSelectedResolution();
-        var resolution = selectedRes.Split(new char[] { 'x' });
-
-        var width = int.Parse(resolution[0]);
-        var height = int.Parse(resolution[1]);
-        var hz = selectedHz.Equals("N/A") ? 0 : int.Parse(selectedHz.Replace("Hz", ""));
-        var mode = (FullScreenMode)fullScreenMode.value;
-        SetResolution(width, height, mode, hz);
-    }
-
-    void SetResolution(int width, int height, FullScreenMode mode, int hz)
-    {
-        // prevent setting resolution multiple times when dialog is updated in the next frame
-        Debug.LogError("Changing resolution to: " + width + "x" + height + " @ " + hz + " Hz in " + mode);
-        Screen.SetResolution(width, height, mode, hz);
     }
 
     void PopulateQualityDropdown()
@@ -266,55 +144,6 @@ public class GraphicSettingsHandler : MonoBehaviour
 
         quality.ClearOptions();
         quality.AddOptions(options);
-        quality.value = quality.options.IndexOf(currentOption); // select current quality level
-        quality.interactable = qualityLevels.Length > 1;
-    }
-
-    public void OnQualityLevelChanged()
-    {
-        var selectedText = quality.options[quality.value].text;
-        QualitySettings.SetQualityLevel(new List<string>(QualitySettings.names).IndexOf(selectedText), true);
-
-        // update vsync settings as it may be affected by quality level
-        vSync.value = QualitySettings.vSyncCount;
-
-        UpdateDialogAfterEndOfFrame();
-    }
-
-    void InitFullScreenMode()
-    {
-        Screen.fullScreenMode = launchFullScreenMode;
-        fullScreenMode.value = (int)Screen.fullScreenMode;
-
-        // we can't switch fullscreen modes in editor
-        if (Application.isEditor)
-            fullScreenMode.interactable = false;
-    }
-    public void OnFullScreenModeChanged()
-    {
-        var mode = (FullScreenMode)fullScreenMode.value;
-        Screen.fullScreenMode = mode;
-        SetRefreshRateEnabled(Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen);
-
-        // update dropdown selection in case we couldn't switch modes for some reason
-        if (mode != Screen.fullScreenMode)
-            fullScreenMode.value = (int)Screen.fullScreenMode;
-
-        UpdateDialogAfterEndOfFrame();
-    }
-
-    void InitVSync()
-    {
-        vSync.value = QualitySettings.vSyncCount;
-        vSyncNote.gameObject.SetActive(QualitySettings.vSyncCount == 0);
-        vSync.interactable = !Application.isEditor;
-    }
-
-    public void OnVSyncChanged()
-    {
-        QualitySettings.vSyncCount = vSync.value;
-
-        UpdateDialogAfterEndOfFrame();
     }
 
     void PopulateMonitorDropdown()
@@ -337,16 +166,240 @@ public class GraphicSettingsHandler : MonoBehaviour
         }
 
         display.AddOptions(options);
+    }
+    #endregion
+
+    #region Dialog Getters
+    string GetSelectedResolution()
+    {
+        return resolution.options[resolution.value].text;
+    }
+
+    string GetSelectedRefreshRate()
+    {
+        return refreshRate.options[refreshRate.value].text;
+    }
+    #endregion
+
+    #region UpdateDialogWithCurrentSettings
+    void ApplyCurrentSettingsToDialog()
+    {
+        updatingDialog = true;
+
+        SelectCurrentResolution();
+        SelectCurrentRefreshRate();
+        /*
+        resolution.interactable = !Application.isEditor;
+
+        refreshRate.value = refreshRate.options.Count - 1; // select highest refresh rate
+        refreshRate.interactable = refreshRatesForCurrentRes.Count > 1 && Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen;
+
+        quality.value = quality.options.IndexOf(currentOption); // select current quality level
+        quality.interactable = qualityLevels.Length > 1;
+    
+        Screen.fullScreenMode = launchFullScreenMode;
+        fullScreenMode.value = (int)Screen.fullScreenMode;
+        // we can't switch fullscreen modes in editor
+        if (Application.isEditor)
+            fullScreenMode.interactable = false;
+
+        vSync.value = QualitySettings.vSyncCount;
+        vSyncNote.gameObject.SetActive(QualitySettings.vSyncCount == 0);
+        vSync.interactable = !Application.isEditor;
+
         display.value = display.options.IndexOf(currentOption);
         display.interactable = Display.displays.Length > 1;
+
+         * */
+
+        //displayNote.gameObject.SetActive(false);
+        //vSyncNote.gameObject.SetActive(false);
+
+        updatingDialog = false;
     }
+
+    void SelectCurrentResolution()
+    {
+        var res = Screen.currentResolution.width + "x" + Screen.currentResolution.height;
+        for (int i = 0; i < resolution.options.Count; i++)
+        {
+            var option = resolution.options[i];
+            if (option.text == res)
+            {
+                resolution.value = i;
+                break;
+            }
+        }
+    }
+
+    void SelectCurrentRefreshRate()
+    {
+        string hz = Screen.currentResolution.refreshRate + hzSuffix;
+        for (int i = 0; i < refreshRate.options.Count; i++)
+        {
+            var refreshRate = this.refreshRate.options[i];
+            if (refreshRate.text == hz)
+            {
+                this.refreshRate.value = i;
+                break;
+            }
+        }
+    }
+    #endregion
+
+    #region UpdateInteractability
+    void UpdateDialogInteractability()
+    {
+        if (Application.isEditor)
+        {
+            // in editor mode we can only change quality level, everything else is not applicable or has to be changed through game view settings
+            resolution.interactable = false;
+            refreshRate.interactable = false;
+            fullScreenMode.interactable = false;
+            vSync.interactable = false;
+            resolution.interactable = false;
+            quality.interactable = true;
+            display.interactable = false;
+        }
+        else
+        {
+            // TODO
+        }
+    }
+
+    void SetRefreshRateInteractable(bool interactable)
+    {
+        if (!interactable)
+        {
+            refreshRate.ClearOptions();
+            refreshRate.AddOptions(new List<string>() { "N/A" });
+        }
+
+        refreshRate.interactable = interactable;
+    }
+    #endregion
+
+    #region Event Handlers
+    public void OnResolutionChanged()
+    {
+        if (updatingDialog)
+            return;
+
+        //var selectedHz = GetSelectedRefreshRate();
+
+        ApplyResolution();
+
+        /*
+        // update refresh rates and try to select the same refresh rate as before, if available
+        PopulateRefresRateDropdown();
+        SelectRefreshRate(selectedHz);
+        selectedHz = GetSelectedRefreshRate(); // Hz may have changed if previous Hz isn't available
+        */
+
+        UpdateDialogAfterEndOfFrame();
+    }
+
+    public void OnRefreshRateChanged()
+    {
+        if (updatingDialog)
+            return;
+
+        ApplyResolution();
+        UpdateDialogAfterEndOfFrame();
+    }
+
+    public void OnQualityLevelChanged()
+    {
+        if (updatingDialog)
+            return;
+
+        var selectedText = quality.options[quality.value].text;
+        QualitySettings.SetQualityLevel(new List<string>(QualitySettings.names).IndexOf(selectedText), true);
+
+        // update vsync settings as it may be affected by quality level
+        vSync.value = QualitySettings.vSyncCount;
+
+        UpdateDialogAfterEndOfFrame();
+    }
+
+    public void OnFullScreenModeChanged()
+    {
+        if (updatingDialog)
+            return;
+
+        var mode = (FullScreenMode)fullScreenMode.value;
+        Screen.fullScreenMode = mode;
+        SetRefreshRateInteractable(Screen.fullScreenMode == FullScreenMode.ExclusiveFullScreen);
+
+        // update dropdown selection in case we couldn't switch modes for some reason
+        if (mode != Screen.fullScreenMode)
+            fullScreenMode.value = (int)Screen.fullScreenMode;
+
+        UpdateDialogAfterEndOfFrame();
+    }
+
+    public void OnVSyncChanged()
+    {
+        if (updatingDialog)
+            return;
+
+        QualitySettings.vSyncCount = vSync.value;
+
+        UpdateDialogAfterEndOfFrame();
+    }
+
 
     public void OnMonitorChanged()
     {
+        if (updatingDialog)
+            return;
+
         // currently does not attempt to auto-restart application, it merely removes the Play button thus forcing user to restart
         // for one, restarting would have to be coded separately for each platform (Windows, Mac, Linux, possibly won't work with UWP)
         // secondly, the "ForceSingleInstance" flag would prevent a restart without additional do-hickery (external app or batch file)
 
         UpdateDialogAfterEndOfFrame();
     }
+    #endregion
+
+    #region Apply Changes
+    void ApplyResolution()
+    {
+        var selectedHz = GetSelectedRefreshRate();
+        var selectedRes = GetSelectedResolution();
+        var resolution = selectedRes.Split(new char[] { 'x' });
+
+        var width = int.Parse(resolution[0]);
+        var height = int.Parse(resolution[1]);
+        var hz = selectedHz.Equals("N/A") ? 0 : int.Parse(selectedHz.Replace(hzSuffix, ""));
+        var mode = (FullScreenMode)fullScreenMode.value;
+        SetResolution(width, height, mode, hz);
+    }
+
+    void SetResolution(int width, int height, FullScreenMode mode, int hz)
+    {
+        // prevent setting resolution multiple times when dialog is updated in the next frame
+        Debug.LogError("Changing resolution to: " + width + "x" + height + " @ " + hz + " Hz in " + mode);
+        Screen.SetResolution(width, height, mode, hz);
+    }
+    #endregion
+
+    #region Update After Frame 
+    void UpdateDialogAfterEndOfFrame()
+    {
+        StartCoroutine(UpdateDialogAfterEndOfFrameCoroutine());
+    }
+
+    IEnumerator UpdateDialogAfterEndOfFrameCoroutine()
+    {
+        // must wait for end of this AND next frame for the new resolution to be applied
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+
+        Debug.LogError("NEW Resolution: " + Screen.currentResolution);
+        PopulateDropdowns();
+        ApplyCurrentSettingsToDialog();
+        UpdateDialogInteractability();
+    }
+    #endregion
 }
