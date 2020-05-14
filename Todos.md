@@ -40,6 +40,8 @@ Changes to the following items may cause other items to change or become irrelev
 TODO
 
 Tasks:
-- update vsync with fps hint (ie "1/2 Display Rate(30 fps)")
+- popup funktion (play = ok)
+- popup key einstellbar
 
 Bugs:
+- when switching from fullscreen to any window, make sure resolution is at least one less than the desktop resolution
