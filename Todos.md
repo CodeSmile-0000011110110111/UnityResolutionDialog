@@ -44,4 +44,6 @@ Tasks:
 - popup key einstellbar
 
 Bugs:
-- when switching from fullscreen to any window, make sure resolution is at least one less than the desktop resolution
+
+Idee:
+- Tool, das ausgibt welche Resolution was ist (Display, Screen, Window, Desktop, usw.)

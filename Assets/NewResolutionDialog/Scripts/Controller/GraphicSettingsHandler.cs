@@ -108,7 +108,8 @@ public class GraphicSettingsHandler : MonoBehaviour
         var resolutions = Screen.resolutions;
         var isWindowed = Screen.fullScreenMode == FullScreenMode.Windowed;
         var isFullScreenWindow = Screen.fullScreenMode == FullScreenMode.FullScreenWindow;
-        var desktopResolution = Screen.currentResolution;
+        var systemWidth = Display.main.systemWidth;
+        var systemHeight = Display.main.systemHeight;
 
         foreach (var res in resolutions)
         {
@@ -117,9 +118,9 @@ public class GraphicSettingsHandler : MonoBehaviour
             var height = int.Parse(resParts[1].Trim());
 
             // skip resolutions that won't fit in windowed modes
-            if (isWindowed && (width >= desktopResolution.width || height >= desktopResolution.height))
+            if (isWindowed && (width >= systemWidth || height >= systemHeight))
                 continue;
-            if (isFullScreenWindow && (width > desktopResolution.width || height > desktopResolution.height))
+            if (isFullScreenWindow && (width > systemWidth || height > systemHeight))
                 continue;
 
             // resolution
@@ -336,7 +337,7 @@ public class GraphicSettingsHandler : MonoBehaviour
         if (updatingDialog)
             return;
 
-        ApplyResolution();
+        ApplySelectedResolution();
         UpdateDialogAfterEndOfFrame();
     }
 
@@ -345,7 +346,7 @@ public class GraphicSettingsHandler : MonoBehaviour
         if (updatingDialog)
             return;
 
-        ApplyResolution();
+        ApplySelectedResolution();
         UpdateDialogAfterEndOfFrame();
     }
 
@@ -353,6 +354,8 @@ public class GraphicSettingsHandler : MonoBehaviour
     {
         if (updatingDialog)
             return;
+
+        var wasWindowed = Screen.fullScreenMode == FullScreenMode.Windowed;
 
         var mode = GetSelectedFullScreenMode();
         Screen.fullScreenMode = mode;
@@ -363,9 +366,12 @@ public class GraphicSettingsHandler : MonoBehaviour
             var resolution = selectedRes.Split(new char[] { 'x' });
             var width = int.Parse(resolution[0]);
             var height = int.Parse(resolution[1]);
-            var screenWidth = Screen.width;
-            var screenHeight = Screen.height;
-            if (width >= screenWidth|| height >= screenHeight)
+            var screenWidth = Display.main.systemWidth;
+            var screenHeight = Display.main.systemHeight;
+            //Debug.LogError("cur w/h: " + width + "x" + height + ", max w/h: " + screenWidth + "x" + screenHeight + ", Scr w/h: " + Screen.width + "x" + Screen.height + 
+            //    ", DspR w/h: " + Display.main.renderingWidth + "x" + Display.main.renderingHeight + ", DspS w/h: " + Display.main.systemWidth + "x" + Display.main.systemHeight);
+
+            if (width >= screenWidth || height >= screenHeight)
             {
                 var closestWidth = screenWidth;
                 var closestHeight = screenHeight;
@@ -381,12 +387,24 @@ public class GraphicSettingsHandler : MonoBehaviour
                 // set to resolution closest to desktop, just one below desktop res
                 SetResolution(closestWidth, closestHeight, mode, 0);
             }
+            else
+            {
+                ApplySelectedResolution();
+            }
         }
+        /*
+        else if (wasWindowed)
+        {
+            // reset to native/desktop resolution
+            SetResolution(Display.main.systemWidth, Display.main.systemHeight, mode, 0);
+        }
+        */
         else
         {
-            ApplyResolution();
-            UpdateDialogAfterEndOfFrame();
+            ApplySelectedResolution();
         }
+
+        UpdateDialogAfterEndOfFrame();
     }
 
     public void OnVSyncChanged()
@@ -425,7 +443,7 @@ public class GraphicSettingsHandler : MonoBehaviour
     #endregion
 
     #region Apply Changes
-    void ApplyResolution()
+    void ApplySelectedResolution()
     {
         // in case resolution changed, we need to check whether the Hz selection still applies for the new resolution
         // if not we opt to go with the default '0' Hz
@@ -445,7 +463,7 @@ public class GraphicSettingsHandler : MonoBehaviour
     void SetResolution(int width, int height, FullScreenMode mode, int hz)
     {
         // prevent setting resolution multiple times when dialog is updated in the next frame
-        Debug.LogError("DESIRED res: " + GetResolutionString(width, height) + " @ " + hz + " Hz in " + mode);
+        //Debug.LogError("DESIRED res: " + GetResolutionString(width, height) + " @ " + hz + " Hz in " + mode);
         Screen.SetResolution(width, height, mode, hz);
         QualitySettings.vSyncCount = vSync.value; // reset vsync setting as it may be affected by resolution
     }
@@ -463,7 +481,8 @@ public class GraphicSettingsHandler : MonoBehaviour
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
 
-        Debug.LogError("NEW res is: " + Screen.width+ "x" + Screen.height + " @ " + Screen.currentResolution.refreshRate + " Hz in " + Screen.fullScreenMode);
+        //Debug.LogError("NEW Screen: " + Screen.width+ "x" + Screen.height + " (curRes: " + Screen.currentResolution.width + "x" + Screen.currentResolution.height +
+        //    ", sysRes: " + Display.main.systemWidth + "x" + Display.main.systemHeight + ") @ " + Screen.currentResolution.refreshRate + " Hz in " + Screen.fullScreenMode);
         PopulateDropdowns();
         ApplyCurrentSettingsToDialog();
         UpdateDialogInteractability();
