@@ -6,13 +6,14 @@ using UnityEngine.UI;
 
 public class ButtonHandler : MonoBehaviour
 {
+    [SerializeField] Settings settings;
     [SerializeField] Button playButton;
     [SerializeField] Button quitButton;
     [SerializeField] Button closeButton;
 
     private void OnEnable()
     {
-        var isLaunchScene = SceneManager.GetActiveScene().buildIndex == 0;
+        var isLaunchScene = settings.dialogStyle == ResolutionDialogStyle.LaunchDialog;
         playButton.gameObject.SetActive(isLaunchScene);
         quitButton.gameObject.SetActive(isLaunchScene);
         closeButton.gameObject.SetActive(!isLaunchScene);

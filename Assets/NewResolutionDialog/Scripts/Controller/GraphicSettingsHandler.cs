@@ -20,6 +20,8 @@ public class GraphicSettingsHandler : MonoBehaviour
     [SerializeField] Text displayNote;
 
     static readonly string hzSuffix = " Hz";
+    static readonly string prefsKey_RefreshRate = "NewResolutionDialog_RefreshRate";
+    static readonly string prefsKey_VSyncCount = "NewResolutionDialog_vSyncCount";
 
     Dictionary<string, List<string>> refreshRates = new Dictionary<string, List<string>>();
     bool updatingDialog = true;
@@ -81,6 +83,20 @@ public class GraphicSettingsHandler : MonoBehaviour
     {
         displayNote.gameObject.SetActive(false);
         vSyncNote.gameObject.SetActive(false);
+
+        var hz = PlayerPrefs.GetInt(prefsKey_RefreshRate, 0);
+        if (hz != 0)
+        {
+            if (hz != Screen.currentResolution.refreshRate)
+            {
+                SetResolution(Screen.width, Screen.height, Screen.fullScreenMode, PlayerPrefs.GetInt(prefsKey_RefreshRate, 0));
+                UpdateDialogAfterEndOfFrame();
+            }
+        }
+
+        var vSyncCount = PlayerPrefs.GetInt(prefsKey_VSyncCount, QualitySettings.vSyncCount);
+        if (vSyncCount != QualitySettings.vSyncCount)
+            QualitySettings.vSyncCount = PlayerPrefs.GetInt(prefsKey_VSyncCount, QualitySettings.vSyncCount);
     }
 
     void OnEnable()
@@ -346,6 +362,11 @@ public class GraphicSettingsHandler : MonoBehaviour
         if (updatingDialog)
             return;
 
+        int hz = 0;
+        int.TryParse(GetSelectedRefreshRate(), out hz);
+        Debug.LogError(GetSelectedRefreshRate() + " => " + hz);
+        PlayerPrefs.SetInt(prefsKey_RefreshRate, hz);
+
         ApplySelectedResolution();
         UpdateDialogAfterEndOfFrame();
     }
@@ -413,6 +434,7 @@ public class GraphicSettingsHandler : MonoBehaviour
             return;
 
         QualitySettings.vSyncCount = vSync.value;
+        PlayerPrefs.SetInt(prefsKey_VSyncCount, vSync.value);
         UpdateDialogAfterEndOfFrame();
     }
 
@@ -463,7 +485,7 @@ public class GraphicSettingsHandler : MonoBehaviour
     void SetResolution(int width, int height, FullScreenMode mode, int hz)
     {
         // prevent setting resolution multiple times when dialog is updated in the next frame
-        //Debug.LogError("DESIRED res: " + GetResolutionString(width, height) + " @ " + hz + " Hz in " + mode);
+        Debug.LogError("DESIRED res: " + GetResolutionString(width, height) + " @ " + hz + " Hz in " + mode);
         Screen.SetResolution(width, height, mode, hz);
         QualitySettings.vSyncCount = vSync.value; // reset vsync setting as it may be affected by resolution
     }
@@ -481,8 +503,8 @@ public class GraphicSettingsHandler : MonoBehaviour
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
 
-        //Debug.LogError("NEW Screen: " + Screen.width+ "x" + Screen.height + " (curRes: " + Screen.currentResolution.width + "x" + Screen.currentResolution.height +
-        //    ", sysRes: " + Display.main.systemWidth + "x" + Display.main.systemHeight + ") @ " + Screen.currentResolution.refreshRate + " Hz in " + Screen.fullScreenMode);
+        Debug.LogError("NEW Screen: " + Screen.width+ "x" + Screen.height + " (curRes: " + Screen.currentResolution.width + "x" + Screen.currentResolution.height +
+            ", sysRes: " + Display.main.systemWidth + "x" + Display.main.systemHeight + ") @ " + Screen.currentResolution.refreshRate + " Hz in " + Screen.fullScreenMode);
         PopulateDropdowns();
         ApplyCurrentSettingsToDialog();
         UpdateDialogInteractability();

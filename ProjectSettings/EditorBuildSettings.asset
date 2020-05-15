@@ -6,9 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/NewResolutionDialog/Scenes/NewResolutionDialog.unity
-    guid: 31a9d23a424d69345887c08012de3edf
-  - enabled: 1
     path: Assets/NewResolutionDialog/Scenes/SampleScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/NewResolutionDialog/Scenes/NewResolutionDialog.unity
+    guid: 31a9d23a424d69345887c08012de3edf
   m_configObjects: {}
