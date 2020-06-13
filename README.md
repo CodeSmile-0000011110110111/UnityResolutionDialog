@@ -6,13 +6,13 @@ Replacement for Unity's built-in resolution dialog (aka Screen Selector) that wa
 
 # Installation 
 Add this dependency to your ``manifest.json`` located at ``/Packages/manifest.json``:
-```json 
+```
 {
     ...
     "dependencies": {
         ...
         "com.sitterheim.unityresolutiondialog": "https://github.com/sitterheim/UnityResolutionDialog.git#release/stable"
     }
-    ..
+    ...
 }
 ```
