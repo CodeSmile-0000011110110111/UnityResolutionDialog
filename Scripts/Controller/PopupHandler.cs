@@ -1,33 +1,23 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 #pragma warning disable 0649
 
+/// <summary>
+///     Shows the popup at Start if the <see cref="ResolutionDialogStyle" /> is set to
+///     <see cref="ResolutionDialogStyle.LaunchDialog" />
+/// </summary>
+/// <seealso cref="ResolutionDialogStyle.LaunchDialog" />
+/// <seealso cref="DefaultInputsHandler" />
 public class PopupHandler : MonoBehaviour
 {
-    [SerializeField] Settings settings;
-    [SerializeField] Canvas dialogCanvas;
+    [SerializeField]
+    private Settings settings;
 
-    void Start()
+    [SerializeField]
+    private Canvas dialogCanvas;
+
+    private void Start()
     {
-        dialogCanvas.enabled = (settings.dialogStyle == ResolutionDialogStyle.LaunchDialog);
-        if (dialogCanvas.enabled == false)
-            StartCoroutine(WaitForActivation());
-    }
-
-    IEnumerator WaitForActivation()
-    {
-        while (true)
-        {
-            yield return new WaitUntil(() => Input.GetKeyUp(settings.popupKeyCode));
-
-            // toggle canvas
-            dialogCanvas.enabled = !dialogCanvas.enabled;
-
-            // wait twice (into next frame) to prevent the hotkey from being recognized again in the same frame
-            yield return new WaitForEndOfFrame();
-            yield return new WaitForEndOfFrame();
-        }
+        dialogCanvas.enabled = settings.dialogStyle == ResolutionDialogStyle.LaunchDialog;
     }
 }
