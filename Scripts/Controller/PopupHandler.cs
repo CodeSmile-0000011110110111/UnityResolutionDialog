@@ -2,22 +2,25 @@
 
 #pragma warning disable 0649
 
-/// <summary>
-///     Shows the popup at Start if the <see cref="ResolutionDialogStyle" /> is set to
-///     <see cref="ResolutionDialogStyle.LaunchDialog" />
-/// </summary>
-/// <seealso cref="ResolutionDialogStyle.LaunchDialog" />
-/// <seealso cref="DefaultInputsHandler" />
-public class PopupHandler : MonoBehaviour
+namespace NewResolutionDialog.Scripts.Controller
 {
-    [SerializeField]
-    private Settings settings;
-
-    [SerializeField]
-    private Canvas dialogCanvas;
-
-    private void Start()
+    /// <summary>
+    ///     Shows the popup at Start if the <see cref="ResolutionDialogStyle" /> is set to
+    ///     <see cref="ResolutionDialogStyle.LaunchDialog" />
+    /// </summary>
+    /// <seealso cref="ResolutionDialogStyle.LaunchDialog" />
+    /// <seealso cref="DefaultInputsHandler" />
+    public class PopupHandler : MonoBehaviour
     {
-        dialogCanvas.enabled = settings.dialogStyle == ResolutionDialogStyle.LaunchDialog;
+        [SerializeField]
+        private Settings settings;
+
+        [SerializeField]
+        private Canvas dialogCanvas;
+
+        private void Start()
+        {
+            dialogCanvas.enabled = settings.dialogStyle == ResolutionDialogStyle.LaunchDialog;
+        }
     }
 }

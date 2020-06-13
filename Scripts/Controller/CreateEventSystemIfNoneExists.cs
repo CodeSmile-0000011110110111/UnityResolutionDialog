@@ -1,18 +1,21 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
-[ExecuteInEditMode]
-public class CreateEventSystemIfNoneExists : MonoBehaviour
+namespace NewResolutionDialog.Scripts.Controller
 {
-    private void Awake()
+    [ExecuteInEditMode]
+    public class CreateEventSystemIfNoneExists : MonoBehaviour
     {
-        // in case prefab gets dropped onto a scene, check if an event system exists and if not, create one
-        // this is to avoid any issues due to a scene not having an event system because adding prefabs to a scene
-        // apparently doesn't add the event system even if the prefab contains a canvas with UI controls
-        if (FindObjectOfType<EventSystem>() == null)
+        private void Awake()
         {
-            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-            Debug.Log("NewResolutionDialog added 'EventSystem' to Scene.");
+            // in case prefab gets dropped onto a scene, check if an event system exists and if not, create one
+            // this is to avoid any issues due to a scene not having an event system because adding prefabs to a scene
+            // apparently doesn't add the event system even if the prefab contains a canvas with UI controls
+            if (FindObjectOfType<EventSystem>() == null)
+            {
+                new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+                Debug.Log("NewResolutionDialog added 'EventSystem' to Scene.");
+            }
         }
     }
 }
