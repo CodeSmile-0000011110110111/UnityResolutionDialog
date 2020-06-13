@@ -4,8 +4,15 @@ using UnityEngine;
 
 public enum ResolutionDialogStyle
 {
+    /// <summary>
+    ///     Use this as a first scene. Cannot be reopened once closed.
+    /// </summary>
     LaunchDialog,
-    PopupDialog,
+
+    /// <summary>
+    ///     Use this as a popup. Open it by pressing the corresponding key.
+    /// </summary>
+    PopupDialog
 }
 
 public class Settings : MonoBehaviour
