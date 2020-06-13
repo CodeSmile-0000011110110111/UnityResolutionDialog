@@ -1,0 +1,11 @@
+{
+    "name": "com.sitterheim.unityresolutiondialog",
+    "version": "1.1.0",
+    "displayName": "Unity Resolution Dialog",
+    "description": "Replacement for Unity's built-in resolution dialog (aka Screen Selector) that was removed in Unity 2019.3. Works both up front (simply make it the first scene) and as a popup dialog (default key: ESC). Intended for development / testing purposes but can also be used in production.",
+    "unity": "2019.3",
+    "author": {
+        "name": "Steffen Itterheim",
+        "url": "https://github.com/sitterheim"
+    }
+}
