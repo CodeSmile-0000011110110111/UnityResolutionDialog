@@ -207,7 +207,7 @@ public class GraphicSettingsHandler : MonoBehaviour
         {
             var display = Display.displays[i];
 
-            var displayString = "Diplay " + (i + 1) + " (" + GetResolutionString(display.systemWidth, display.systemHeight) + ")";
+            var displayString = "Display " + (i + 1) + " (" + GetResolutionString(display.systemWidth, display.systemHeight) + ")";
             var option = new Dropdown.OptionData(displayString);
             options.Add(option);
 
